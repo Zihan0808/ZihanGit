@@ -1,0 +1,36 @@
+#1
+wc -l data/fasta/*.fasta
+Explanation: 
+*.fasta selects all three supplied FASTA files. wc -l counts newline characters in each file, not sequence positions. The two numbered files have one fewer newline character than their displayed lines because their final lines do not end with a newline.
+Output:
+27 data/fasta/407228326.fasta
+    127 data/fasta/407228412.fasta
+  78104 data/fasta/e_coli.fasta
+  78258 total
+
+#2
+tail -n +2 data/fasta/e_coli.fasta
+Explanation:
+This command prints all lines starting from the second line. The option -n +2 means to start output from line 2 and continue to the end of the file. Line 1 is the FASTA header, so it is excluded.
+Output:
+
+#3
+tail -n +2 data/fasta/e_coli.fasta | grep -o . | wc -l
+Explanation:
+This command skips the FASTA header, uses grep -o . to find each sequence character, and uses wc -l to count the total number of sequence positions, including ambiguous bases.
+Output:
+4686137
+
+#4
+tail -n +2 data/fasta/e_coli.fasta | tr -d '\r\n' | grep -o 'ATGC' | wc -l
+Explanation:
+This command removes the FASTA header and line breaks, to join all the DNA sequence into one line, then uses grep -o to find every occurrence of ATGC. Finally, wc -l counts the total number of matches, including those originally split across lines.
+Output: 
+21968
+
+#5
+A=$(tail -n +2 data/fasta/e_coli.fasta | grep -o 'A' | wc -l); T=$(tail -n +2 data/fasta/e_coli.fasta | grep -o 'T' | wc -l); G=$(tail -n +2 data/fasta/e_coli.fasta | grep -o 'G' | wc -l); C=$(tail -n +2 data/fasta/e_coli.fasta | grep -o 'C' | wc -l); echo "$((A + T)) / $((G + C))"| bc -l
+Explanation:
+This command counts the occurrences of A, T, G, and C separately using grep and wc. It then uses Bash arithmetic to calculate A+T and G+C, and bc -l to print their decimal ratio. Ambiguous bases are excluded.
+Output: 
+.96922822848944879586
