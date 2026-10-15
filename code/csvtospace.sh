@@ -1,3 +1,10 @@
+#!/bin/bash
+# Author: ZihanGao (repository Git author)
+# Script: csvtospace.sh
+# Description: Replace commas with spaces; write results/INPUT_BASENAME.txt.
+# Usage: bash code/csvtospace.sh INPUT_FILE (from repository root)
+# Updated: 2026-10-15
+
 if [[ $# -ne 1 ]]; then
     printf 'Usage: bash %s INPUT_FILE\n' "$0" >&2
     exit 2
@@ -10,10 +17,10 @@ if [[ ! -f "$input_file" || ! -r "$input_file" ]]; then
 fi
 
 input_name="${input_file##*/}"
-output_file="../results/${input_name}.txt"
+output_file="results/${input_name}.txt"
 
-if ! mkdir -p ../results; then
-    printf 'Error: cannot create ../results/\n' >&2
+if ! mkdir -p results; then
+    printf 'Error: cannot create results/\n' >&2
     exit 1
 fi
 

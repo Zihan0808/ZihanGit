@@ -1,10 +1,9 @@
 #!/bin/bash
-# Author: Your name you.login@imperial.ac.uk
+# Author: ZihanGao (repository Git author)
 # Script: tabtocsv.sh
-# Desc: substitute the tabs in the files with commas
-#       saves the output into a .csv file
-# Arguments: 1-> tab delimited file
-# Date: Oct 2015
+# Description: Replace tabs with commas; write results/INPUT_BASENAME.csv.
+# Usage: bash code/tabtocsv.sh INPUT_FILE (from repository root)
+# Updated: 2026-10-15
 
 if [[ $# -ne 1 ]]; then
     printf 'Usage: bash %s INPUT_FILE\n' "$0" >&2
