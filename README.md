@@ -110,22 +110,99 @@ Bash syntax checks passed for both scripts. Python 3 was used only for
 verification (byte comparisons, independent sequence counts and input hashes);
 it is not required to run the assignment commands.
 
-Scripts and all supplied input datasets are tracked. `/results/` and `/sandbox/`
-are ignored; generated results were removed from Git tracking while local
-outputs were retained. The empty, already locally deleted `sandbox/test.py`
-was untracked. Existing `*~` and `*.tmp` ignore rules remain. Check from the
-repository root with:
+Assignment 1 generated results were removed from Git tracking during revision.
+For Assignment 2, the three tree-survey result CSVs are included in Git, and
+`results/` is no longer ignored. `/sandbox/` and Python caches remain ignored,
+along with `*~` and `*.tmp` files. Check from the repository root with:
 
 ```bash
 git ls-files results sandbox
-git check-ignore results/1800.csv.txt sandbox/test.py
+git check-ignore sandbox/test.py
 git status --short
 ```
 
-The first command should print nothing; the second should print both paths.
+The first command lists the three tree-survey result CSVs; the second prints
+`sandbox/test.py`.
 Converters overwrite outputs with the same basename, so inputs from different
 directories with identical basenames share an output path.
 
 ## AI use
 
 AI assistance was used to help me understand the assignment requirements and feedback, and to improve the clarity, structure, and content of the README documentation.
+
+# Assignment 2: Silwood tree-cleaning practical
+
+This assignment cleans a synthetic tree survey according to the supplied
+metadata and counts accepted oak records.
+
+## Files
+
+- `data/silwood_trees_raw.csv`: unchanged input survey.
+- `data/silwood_trees_metadata.md`: validation and output rules.
+- `code/clean_silwood_trees.py`: cleaner and CSV writer.
+- `code/test_silwood_trees.py`: eight simple checks of the main cleaning functions.
+- `results/`: regenerated CSV outputs, included in Git.
+
+## Plan
+
+Plan (written before implementing the three functions): read the unchanged
+`data/silwood_trees_raw.csv`, using `data/silwood_trees_metadata.md` as the
+validation specification. `validate_record` receives a row, its source line
+number and accepted identifiers, and returns a cleaned row or `None` plus
+rejection reasons. `process_records` receives rows and returns accepted rows
+and issue reports. `summarise_oaks` receives accepted rows and returns species
+counts for exactly `Quercus`.
+
+```text
+load CSV records
+start empty accepted records, issues and accepted identifiers
+for each row in file order, numbering from 2:
+    strip text and validate all fields against metadata
+    collect every applicable reason in the specified order
+    if there are reasons: append source row, identifier and reasons to issues
+    otherwise: accept canonical record and reserve its identifier
+sort accepted records by identifier
+count accepted records whose genus equals Quercus, grouped by species
+sort species counts by species
+write accepted records, issues and oak counts to three replacement CSV files
+```
+
+## How to run
+
+From the repository root, using Python 3.10 or later (standard library only):
+
+```bash
+python3 code/test_silwood_trees.py
+python3 code/clean_silwood_trees.py
+```
+
+## Output files
+
+Outputs are created in `results/` and included in Git:
+
+- `silwood_trees_clean.csv`: accepted canonical records in input-column order,
+  sorted by identifier.
+- `silwood_tree_issues.csv`: rejected rows in source order, with `source_row`,
+  stripped `record_id` and all `reasons` joined by `; `.
+- `oak_species_counts.csv`: represented oak species and counts, sorted by species.
+
+## Test notes
+
+The test script uses ordinary functions and `assert` statements. Its eight tests
+check that valid text is cleaned, missing and invalid values are rejected,
+duplicate identifiers are rejected, accepted records are sorted, issue details
+are recorded, and accepted oak records are counted by species. They also check
+that a rejected row does not reserve its identifier and that two oaks of the
+same species give a count of two. Running the script prints
+`All 8 tests passed.` when every expected result is obtained.
+
+All eight tests passed using small example records. Separately, the supplied
+survey produced 24 accepted records and 12 rejected records. The oak summary
+contains `petraea,4` and `robur,4`.
+Misspellings and missing values are rejected rather than inferred; this cleaner
+is specific to the supplied synthetic survey schema. The raw survey and
+metadata and the three result CSVs belong in Git; Python caches do not.
+
+## AI use
+
+I used AI to help me understand the assignment requirements, clarify the validation rules, plan how to test the program, and improve the wording and structure of this README.
