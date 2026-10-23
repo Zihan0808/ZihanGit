@@ -3,3 +3,10 @@
 /sandbox/
 __pycache__/
 *.py[cod]
+
+/results/TreeHts.csv
+/results/*_treeheights.csv
+# Pound Hill generated results
+/results/pound_hill_plot_richness.csv
+/results/pound_hill_plot_richness.pdf
+/results/pound_hill_plot_abundance.csv

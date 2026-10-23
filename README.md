@@ -206,3 +206,129 @@ metadata and the three result CSVs belong in Git; Python caches do not.
 ## AI use
 
 I used AI to help me understand the assignment requirements, clarify the validation rules, plan how to test the program, and improve the wording and structure of this README.
+
+# Assignment 3: R programming and tree heights
+
+This coursework practises base R functions, CSV files, input validation and
+interactive debugging by calculating tree heights from distances and angles.
+
+## Files
+
+- `data/trees.csv`: unchanged input containing 120 tree records.
+- `code/TreeHeight.R`: calculates heights for the supplied `trees.csv`.
+- `code/get_TreeHeight.R`: accepts one input CSV file path.
+- `code/run_get_TreeHeight.sh`: runs the general script on `trees.csv`.
+- `results/`: generated height CSVs, ignored by `.gitignore`.
+
+The R scripts and source CSV belong in Git.
+
+## Calculation and validation
+
+Both R scripts use `TreeHeight()` to calculate
+`height_m = Distance.m * tan(Angle.degrees * pi / 180)`. Multiplying the angle
+by `pi / 180` converts degrees to radians for R's `tan()` function. The input
+must have exactly the three columns `Species`, `Distance.m`, and
+`Angle.degrees`. Distances and angles must be finite numeric values, with
+`0 < Distance.m <= 100` and `0 < Angle.degrees < 90`.
+
+## How to run
+
+From the repository root, using R and Bash (no additional R packages needed):
+
+```bash
+Rscript code/TreeHeight.R
+source("code/TreeHeight.R")
+```
+
+## Output files
+
+Outputs are created in `results/` and ignored by Git:
+
+- `TreeHts.csv`: output from `TreeHeight.R`.
+- `trees_treeheights.csv`: output from `get_TreeHeight.R` or the Bash runner
+  when using `data/trees.csv`.
+
+The scripts append `height_m` as the fourth column. Both outputs preserve all
+120 original records, their original columns and their row order. Rerunning
+the input extension. Different input files with identical basenames therefore
+share the same output filename. The original input is not overwritten.
+
+## Test notes
+
+For the manual check I used data row 1 (line 2 of the CSV), `Populus tremula`:
+
+| Distance (m) | Angle (degrees) | Expected height (m) | Calculated height (m) |
+Python was used only for temporary verification; it is not needed to run this
+coursework.
+
+# Assignment 3: Pound Hill cultivation timing and plant species richness
+
+This practical compares mean plant species richness per quadrat among March,
+May and October cultivation treatments, with total abundance as an additional
+comparison. It follows Assignment 3's use of base R and the existing `code/`,
+`data/` and `results/` directories.
+
+## Files
+
+- `data/pound_hill_data.csv`: unchanged species counts from the course dataset.
+- `data/pound_hill_meta_data.csv`: unchanged descriptions of the data fields.
+- `code/pound_hill_analysis.R`: prepares the data, summarises plots and draws
+  the richness figure.
+
+The inputs were downloaded from the supplied MulQuaBio
+[data](https://mulquabio.github.io/MQB/_downloads/c14bb22a50a570bbd12f60c9d0b64db2/pound_hill_data.csv)
+and [metadata](https://mulquabio.github.io/MQB/_downloads/821be5002cdaa8255040b23e38313e5c/pound_hill_meta_data.csv)
+links.
+
+## Analysis
+
+The raw file has four rows identifying quadrats, followed by species count
+rows. The script transposes it and makes a long table with one row per species
+per quadrat. The metadata says blank species counts are observed absences, so
+these become zero. Unrecorded quadrats are not added.
+
+Quadrats are identified by `Cultivation`, `Block`, `Plot` and `Quadrat`
+together. Richness counts species with `Count > 0`; abundance sums their
+counts. The script calculates both measures per quadrat, then averages within
+each plot. Treatment comparisons give each plot equal weight because plots
+contain different numbers of quadrats (3–6).
+
+## How to run
+
+From the repository root, using base R with no additional packages:
+
+```bash
+Rscript code/pound_hill_analysis.R
+```
+
+## Output files
+
+The script creates or overwrites three files in `results/`:
+
+- `pound_hill_plot_richness.csv`: 12 rows with `Cultivation`, `Block`, `Plot`
+  and `MeanRichness`.
+- `pound_hill_plot_richness.pdf`: individual plot means for March, May and
+  October, with mean species richness per quadrat on the y-axis.
+- `pound_hill_plot_abundance.csv`: the same 12 plots with `MeanAbundance`.
+
+## Test notes
+
+The data contain 41 species, 59 distinct quadrats and 12 plots, with four plots
+per treatment. The script ran twice successfully; both CSVs had the correct
+columns and one row per plot, and were identical after rerunning. Independent
+calculations from the original CSV matched every plot mean. Both input files
+retained their original SHA-256 hashes. Python was used only for verification.
+
+Treatment means, giving each plot equal weight, were:
+
+| Cultivation | Mean richness (species per quadrat) | Mean abundance (individuals per quadrat) |
+| --- | --- | --- |
+| March | 7.81 | 144.28 |
+| May | 9.65 | 143.28 |
+| October | 7.61 | 205.20 |
+
+May had the highest mean richness, although plot values overlapped among
+treatments. October had the highest abundance: many individuals of a few
+dominant species can give high abundance without high richness. The figure
+alone cannot establish causation; random treatment allocation within blocks
+and comparable management and sampling would need confirmation.
