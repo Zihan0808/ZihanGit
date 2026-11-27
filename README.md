@@ -11,15 +11,39 @@ Run commands from the repository root, except for the FASTA commands (from
 - R with base graphics and the additional packages `reshape2`, `dplyr` and
   `tidyr`. ImageMagick (`magick` or `convert`) is needed for the TIFF exercise.
 
-For a fresh checkout, install ImageMagick with your Linux package manager and
-make the R packages available in your R library. In an R console, run
-`install.packages(c("reshape2", "dplyr", "tidyr"), repos = "https://cloud.r-project.org")`
-if these packages are missing. On the existing Linux coursework checkout, the
-already prepared copies can be activated in the current Bash session:
+For a fresh checkout, install missing system dependencies with your Linux
+package manager. For example, on Ubuntu or Debian:
 
 ```bash
-source sandbox/mqb-deps/env.sh
-source sandbox/assignment4-r-tidy/env.sh
+sudo apt update
+sudo apt install bc imagemagick
+```
+
+Check that `bc` and either `magick` or `convert` are available:
+
+```bash
+command -v bc
+command -v magick || command -v convert
+```
+
+In an R console (start with `R --vanilla`), install the additional packages
+if they are missing:
+
+```r
+install.packages(c("reshape2", "dplyr", "tidyr"),
+                 repos = "https://cloud.r-project.org")
+```
+
+Use `tidyr` version 1.3.0 or later because `code/data_wrang_tidy.R` uses
+the `cols_vary` argument of `pivot_longer()`. If an older version is installed,
+update it with `install.packages("tidyr", repos = "https://cloud.r-project.org")`.
+Check that all three packages and the required version are available:
+
+```r
+stopifnot(requireNamespace("reshape2", quietly = TRUE),
+          requireNamespace("dplyr", quietly = TRUE),
+          requireNamespace("tidyr", quietly = TRUE),
+          packageVersion("tidyr") >= "1.3.0")
 ```
 
 The programs create `results/` as needed. For exercises that use disposable
@@ -288,8 +312,8 @@ and byte-identical reruns in an isolated directory.
 The supplied survey independently yielded 24 accepted and 12 rejected
 records. The oak summary was `petraea,4` and `robur,4`. All three recreated
 tables matched the existing local outputs byte for byte, and the input hashes
-were unchanged. These checks used disposable local copies. A fresh clone from
-GitHub is the post-submission verification step.
+were unchanged. These checks used disposable local copies. See the
+[Fresh-clone check](#fresh-clone-check) under Portfolio verification.
 
 ## AI use
 
@@ -456,11 +480,9 @@ and comparable management and sampling would need confirmation.
 The examples in this section come from the Shell Scripting, Python, R and Data
 Wrangling chapters in `MQB-main.zip`. Run the commands from the repository root
 unless a different working directory is shown. Bash, Python 3 and R are used.
-TIFF conversion also needs ImageMagick, and `data_wrang.R` needs `reshape2`.
-On this Linux checkout, both extra dependencies are available for the current
-Bash session through `source sandbox/mqb-deps/env.sh`. On another checkout,
-make ImageMagick (`magick` or `convert`) and the R package `reshape2` available
-in the usual environment.
+TIFF conversion also needs ImageMagick; `data_wrang.R` needs `reshape2`, and
+`data_wrang_tidy.R` needs `dplyr` and `tidyr`. Install and check these
+dependencies as described in [Software and setup](#software-and-setup).
 
 ## Shell label and image exercises
 
@@ -491,7 +513,6 @@ such as `birch` exits with status 1. Errors are written to standard error.
 no directory argument. For a reproducible test with disposable TIFF copies:
 
 ```bash
-# Activate the existing checkout environment above if needed.
 project_root=$PWD
 mkdir -p sandbox
 image_test=$(mktemp -d "$PWD/sandbox/tiff-check.XXXXXX")
@@ -634,15 +655,22 @@ documented entry points. The checks included fresh output directories, repeat
 runs, failures and three live debugger sessions. Input files supplied by MQB
 were compared with the referenced snapshot. The existing `tab-example.tsv`
 was preserved. The three previously tracked Silwood result CSVs were removed
-from the Git index and kept locally. After submission, clone the GitHub
-repository into `verification/` and rerun the commands in this guide from that
-clone's root.
+from the Git index and kept locally. Clone the GitHub repository into a new
+directory outside this repository and rerun the commands in this guide from
+that clone's root.
+
+### Fresh-clone check
+
+- Date: TODO
+- Commit checked: TODO
+- Clone location: a new directory outside this repository
+- Result: TODO
 
 ## AI use for the portfolio
 
 From November 20 to 27, 2026, I used OpenAI Codex to help me understand the
 Shell, Python and R examples in the MQB textbook, troubleshoot runtime errors,
-review and improve code, and organize this README. 
+review and make suggestions on how to improve the code, and organize this README.
 
 I checked the suggestions by reviewing the results of the Linux runs and
 comparing them with the course requirements and original data. For example, I
@@ -650,7 +678,6 @@ used two TIFF copies to check conversion and reruns, and verified that the PNG
 pixels matched those of the original TIFFs. I also compared the output of the
 two Pound Hill data wrangling workflows in R and confirmed that their CSV
 files were identical byte for byte.
-
 
 ## Revisions after formative feedback
 
@@ -688,8 +715,8 @@ survey gave 24 accepted records and 12 rejected records, with four each of
 `petraea` and `robur`. Headers and record order matched the specification.
 For example, source line 27 reported duplicate `ST004`; the reasons for
 `ST036` appeared in metadata order. The raw CSV and metadata were unchanged.
-Git's index contains no generated results. The GitHub fresh-clone check
-remains to be done after pushing the candidate version.
+Git's index contains no generated results. See the
+[Fresh-clone check](#fresh-clone-check) under Portfolio verification.
 
 ### Assignment 3: Tree heights
 
@@ -751,3 +778,41 @@ their respective CSVs. The 12 plotted values and three treatment means were
 checked against the table. Mean richness per quadrat was 7.8083 for March,
 9.6500 for May and 7.6125 for October. The CSV bytes and rendered PDF matched
 on rerun.
+
+### Fresh-clone check results
+
+- Date: 2026-11-27
+- Commit checked: `67c42b49f456df08034af82c46f223ef6e2366ed`
+- Clone location: `../verification/ZihanGit-fresh` (a new directory outside
+  this repository).
+- Result: 39/39 required files passed; 36 passed initially, and the three
+  checks blocked by missing dependencies passed on rerun. No checks remained
+  failed or unrun.
+
+The verification used Ubuntu 26.04.1 LTS, Python 3.14.4 and R 4.5.2. The
+`bc` command was already available. The R packages `reshape2` (1.4.5),
+`dplyr` (1.2.1) and `tidyr` (1.3.2) were installed from CRAN using an
+R library inside the verification clone. ImageMagick 7.1.2-18 was downloaded
+from the official Ubuntu package repository and unpacked with its dependencies
+inside the verification clone because a system-wide installation required
+interactive sudo authentication. No dependency files were reused from the
+original repository.
+
+After the initial run, the README setup instructions were clarified to
+document the dependencies for a fresh clone and remove references to the
+original checkout's local environment. No tracked files in the verification
+clone were changed. The three failed checks were repeated after installing
+the missing dependencies there.
+
+| File | Initial run | Change before rerun | Rerun result |
+| --- | --- | --- | --- |
+| `code/tiff2_png.sh` | Failed: `magick` and `convert` were unavailable. The TIFF fixture creation failed, and the script returned exit 127 with a valid TIFF and no converter. | Installed ImageMagick locally from the official Ubuntu packages and made `magick` available in the test session. | Passed (exit 0); TIFF-to-PNG pixel comparison and repeated conversion succeeded. |
+| `code/data_wrang.R` | Failed (exit 1): `there is no package called 'reshape2'`. | Installed `reshape2` from CRAN in the verification clone's R library. | Passed (exit 0); 2,419 records, with byte-identical CSV output on repeat. |
+| `code/data_wrang_tidy.R` | Failed (exit 1): `there is no package called 'dplyr'`; `tidyr` was also missing. | Installed `dplyr` and `tidyr` from CRAN in the verification clone's R library. | Passed (exit 0); 2,419 records, with byte-identical CSV output on repeat. |
+
+Both Pound Hill data wrangling scripts produced 2,419 records that matched
+the source data. Their CSV outputs were byte-identical across both scripts
+and repeated runs. TIFF conversions produced pixel-identical PNGs on
+repeated runs; only PNG timestamp metadata differed. All 60 Git-tracked
+files in the verification clone retained their original contents and
+executable permissions.
