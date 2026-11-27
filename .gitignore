@@ -1,12 +1,21 @@
-*~
-*.tmp
+# Generated coursework outputs and temporary experiments
+/results/
 /sandbox/
+/Rplots.pdf
+
+# Language caches and local environments
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+/.venv/
+/venv/
+/.env
+/.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
 
-/results/TreeHts.csv
-/results/*_treeheights.csv
-# Pound Hill generated results
-/results/pound_hill_plot_richness.csv
-/results/pound_hill_plot_richness.pdf
-/results/pound_hill_plot_abundance.csv
+# Editor backups
+*~
+*.tmp

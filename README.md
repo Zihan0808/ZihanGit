@@ -1,3 +1,31 @@
+This cumulative portfolio keeps all 39 required scripts in `code/`, shared
+inputs in `data/` and generated files in `results/`. Formative feedback is
+under `Feedback/`. Source examples come from the MQB snapshot `e23caaa8451f`.
+Run commands from the repository root, except for the FASTA commands (from
+`code/`) and TIFF conversion (from the directory containing TIFF copies).
+
+## Software and setup
+
+- Linux with Bash, GNU coreutils, `grep` and `bc` (for the FASTA ratio).
+- Python 3.10 or later with the standard library, including `doctest` and `pdb`.
+- R with base graphics and the additional packages `reshape2`, `dplyr` and
+  `tidyr`. ImageMagick (`magick` or `convert`) is needed for the TIFF exercise.
+
+For a fresh checkout, install ImageMagick with your Linux package manager and
+make the R packages available in your R library. In an R console, run
+`install.packages(c("reshape2", "dplyr", "tidyr"), repos = "https://cloud.r-project.org")`
+if these packages are missing. On the existing Linux coursework checkout, the
+already prepared copies can be activated in the current Bash session:
+
+```bash
+source sandbox/mqb-deps/env.sh
+source sandbox/assignment4-r-tidy/env.sh
+```
+
+The programs create `results/` as needed. For exercises that use disposable
+input copies, create `sandbox/` with `mkdir -p sandbox`. Git ignores both
+directories, along with generated caches and local environment files.
+
 # Assignment 1: UNIX and shell scripting
 
 This assignment practises UNIX commands on FASTA datasets, Bash delimiter conversion, and organising source files, inputs and generated outputs with Git.
@@ -64,7 +92,7 @@ The two numbered FASTA files have no final newline, so `wc -l` counts one fewer 
 
 These scripts only replace delimiters. They do not handle general quoted CSV or TSV data. For example, a comma inside a quoted CSV field would also become a space, and spaces already inside fields can make the output unclear.
 
-The existing README attributes the practicals and tab converter starter to the MulQuaBio UNIX and Linux and Shell scripting course materials. No separate assignment specification is included locally.
+The practicals and tab converter starter are from the MulQuaBio UNIX and Shell Scripting chapters. The Assignment 1 feedback asked for the `code/` working directory, reproducible counts and consistent root-based converter paths. Those paths and the counts were verified. The synthetic FASTA check also covered CRLF, no final newline, ambiguity and a motif spanning wrapped lines.
 
 ## Exact FASTA commands
 
@@ -76,11 +104,11 @@ wc -l ../data/fasta/*.fasta
 
 tail -n +2 ../data/fasta/e_coli.fasta
 
-tail -n +2 ../data/fasta/e_coli.fasta | grep -o . | wc -l
+tail -n +2 ../data/fasta/e_coli.fasta | tr -d '\r\n' | wc -c
 
 tail -n +2 ../data/fasta/e_coli.fasta | tr -d '\r\n' | grep -o 'ATGC' | wc -l
 
-A=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'A' | wc -l); T=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'T' | wc -l); G=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'G' | wc -l); C=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'C' | wc -l); echo "$((A + T)) / $((G + C))"| bc -l
+A=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'A' | wc -l); T=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'T' | wc -l); G=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'G' | wc -l); C=$(tail -n +2 ../data/fasta/e_coli.fasta | grep -o 'C' | wc -l); printf '%s / %s\n' "$((A + T))" "$((G + C))" | bc -l
 ```
 
 Q2 prints the full sequence body (78,103 lines), beginning with
@@ -110,25 +138,85 @@ Bash syntax checks passed for both scripts. Python 3 was used only for
 verification (byte comparisons, independent sequence counts and input hashes);
 it is not required to run the assignment commands.
 
-Assignment 1 generated results were removed from Git tracking during revision.
-For Assignment 2, the three tree-survey result CSVs are included in Git, and
-`results/` is no longer ignored. `/sandbox/` and Python caches remain ignored,
-along with `*~` and `*.tmp` files. Check from the repository root with:
+Assignment 4 keeps generated results and disposable tests out of Git.
+`git ls-files -- results/ sandbox/` should have no output. Check ignore rules
+with `git check-ignore results/TreeHts.csv sandbox/test.txt`.
+Converters overwrite outputs with the same basename, so inputs from different
+directories with identical basenames share an output path. They reject output
+links or special files and write to a temporary file before replacing the
+destination. Checks covered aliases, output FIFOs and a simulated partial
+conversion failure that left the previous result intact.
+
+## Introductory Bash exercises
+
+These three scripts adapt the introductory examples in
+`content/notebooks/shell-scripting.ipynb` and the `boilerplate.sh` starter
+from the supplied `MQB-main.zip`. Run the following commands from the
+repository root. They need Bash; `variables.sh` also uses the external
+`expr` command. They print to the terminal and do not create result files.
+
+| Script | Purpose | Input |
+| --- | --- | --- |
+| `code/boilerplate.sh` | Demonstrate a shebang, descriptive header, output and successful exit. | None. |
+| `code/MyExampleScript.sh` | Print `Hello` followed by the value of `USER`. | No arguments; reads the environment. |
+| `code/variables.sh` | Display positional parameters, read text and add two integers. | Optional arguments, then prompted text and two integers. |
+
+### Run the examples
 
 ```bash
-git ls-files results sandbox
-git check-ignore sandbox/test.py
-git status --short
+bash code/boilerplate.sh
+bash code/MyExampleScript.sh
+bash code/variables.sh
+bash code/variables.sh 1 "two words"
 ```
 
-The first command lists the three tree-survey result CSVs; the second prints
-`sandbox/test.py`.
-Converters overwrite outputs with the same basename, so inputs from different
-directories with identical basenames share an output path.
+For each interactive `variables.sh` run, enter `hello Linux` at the text
+prompt and `3 5` at the integer prompt. The sum is `8`. The no-argument run
+reports zero parameters and empty first and second arguments. The quoted
+`"two words"` is one argument, so the second invocation reports two
+parameters. With no arguments, `printf` still prints an empty `Argument: <>`
+line; the parameter count is the number reported by `$#`.
+
+All three scripts are executable, so `./code/boilerplate.sh`,
+`./code/MyExampleScript.sh` and `./code/variables.sh 1 "two words"` are also
+valid. `MyExampleScript.sh` normally prints `Hello zihan-gao` on this Linux
+account. It demonstrates an environment variable; `USER` can be changed
+and is not proof of identity.
+
+The arithmetic example deliberately assumes two valid integers, as in the
+chapter. It does not validate arbitrary numeric input or support decimals.
+`IFS= read -r` preserves leading/trailing spaces and literal backslashes in
+the text input. Bash's `echo -e` in the boilerplate interprets `\n` as a
+newline; its `exit 0` reports successful completion.
+
+### Verification
+
+Executed on Linux on 2026-11-25: all 10 checks passed with exit status `0`.
+
+| Check | Observed result |
+| --- | --- |
+| `bash -n` on each script (3 checks) | No syntax errors. |
+| Boilerplate through Bash and direct execution (2 checks) | The expected message and blank lines; exit `0`. |
+| Greeting through Bash with `USER=zihan-gao` | `Hello zihan-gao`. |
+| Direct greeting with `USER="demo user"` | `Hello demo user`; spaces preserved. |
+| Variables without arguments; text `hello Linux`, numbers `3 5` | Parameter count `0`, empty first/second arguments, sum `8`. |
+| Variables with `1 "two words"`; the same prompted input | Parameter count `2`, both arguments preserved, sum `8`. |
+| Direct variables run; text with spaces/backslash, numbers `-5 5` | Text preserved, sum `0`, exit `0`. |
+
+Repeat the syntax checks and two reproducible input cases from the root:
+
+```bash
+bash -n code/boilerplate.sh
+bash -n code/MyExampleScript.sh
+bash -n code/variables.sh
+printf 'hello Linux\n3 5\n' | bash code/variables.sh
+printf 'hello Linux\n3 5\n' | bash code/variables.sh 1 "two words"
+```
 
 ## AI use
 
 AI assistance was used to help me understand the assignment requirements and feedback, and to improve the clarity, structure, and content of the README documentation.
+
 
 # Assignment 2: Silwood tree-cleaning practical
 
@@ -140,8 +228,8 @@ metadata and counts accepted oak records.
 - `data/silwood_trees_raw.csv`: unchanged input survey.
 - `data/silwood_trees_metadata.md`: validation and output rules.
 - `code/clean_silwood_trees.py`: cleaner and CSV writer.
-- `code/test_silwood_trees.py`: eight simple checks of the main cleaning functions.
-- `results/`: regenerated CSV outputs, included in Git.
+- `code/test_silwood_trees.py`: 12 test groups for validation, processing, summaries and the command-line workflow.
+- `results/`: regenerated CSV outputs.
 
 ## Plan
 
@@ -178,7 +266,7 @@ python3 code/clean_silwood_trees.py
 
 ## Output files
 
-Outputs are created in `results/` and included in Git:
+The script creates these files in `results/`.
 
 - `silwood_trees_clean.csv`: accepted canonical records in input-column order,
   sorted by identifier.
@@ -188,20 +276,20 @@ Outputs are created in `results/` and included in Git:
 
 ## Test notes
 
-The test script uses ordinary functions and `assert` statements. Its eight tests
-check that valid text is cleaned, missing and invalid values are rejected,
-duplicate identifiers are rejected, accepted records are sorted, issue details
-are recorded, and accepted oak records are counted by species. They also check
-that a rejected row does not reserve its identifier and that two oaks of the
-same species give a count of two. Running the script prints
-`All 8 tests passed.` when every expected result is obtained.
+The 12 test groups passed. They cover normalization, missing and invalid
+measurements, inclusive measurement bounds, reason order, duplicate IDs,
+rejected IDs that do not reserve an identifier, near-match oak names and an
+empty oak summary. In response to the Assignment 2 feedback, an integrated
+case passes a valid oak and an invalid record to `process_records()`, then
+checks that only the accepted collection contributes to `summarise_oaks()`.
+The CLI test confirms quiet import, new output creation, headers and ordering,
+and byte-identical reruns in an isolated directory.
 
-All eight tests passed using small example records. Separately, the supplied
-survey produced 24 accepted records and 12 rejected records. The oak summary
-contains `petraea,4` and `robur,4`.
-Misspellings and missing values are rejected rather than inferred; this cleaner
-is specific to the supplied synthetic survey schema. The raw survey and
-metadata and the three result CSVs belong in Git; Python caches do not.
+The supplied survey independently yielded 24 accepted and 12 rejected
+records. The oak summary was `petraea,4` and `robur,4`. All three recreated
+tables matched the existing local outputs byte for byte, and the input hashes
+were unchanged. These checks used disposable local copies. A fresh clone from
+GitHub is the post-submission verification step.
 
 ## AI use
 
@@ -233,33 +321,61 @@ must have exactly the three columns `Species`, `Distance.m`, and
 
 ## How to run
 
-From the repository root, using R and Bash (no additional R packages needed):
+From the repository root, using base R and Bash, run these terminal commands.
 
 ```bash
 Rscript code/TreeHeight.R
-source("code/TreeHeight.R")
+Rscript code/get_TreeHeight.R data/trees.csv
+bash code/run_get_TreeHeight.sh
 ```
 
-## Output files
+Alternatively, start `R --vanilla` and enter `source("code/TreeHeight.R")`
+at the R prompt to run the fixed-input exercise.
 
-Outputs are created in `results/` and ignored by Git:
+## Output files and checks
 
-- `TreeHts.csv`: output from `TreeHeight.R`.
-- `trees_treeheights.csv`: output from `get_TreeHeight.R` or the Bash runner
-  when using `data/trees.csv`.
+- `results/TreeHts.csv` is the fixed-input result.
+- `results/trees_treeheights.csv` is the result from the argument-based script
+  or the Bash runner. A different input uses its own basename without `.csv`.
+  Inputs in separate directories with identical basenames share a destination.
 
-The scripts append `height_m` as the fourth column. Both outputs preserve all
-120 original records, their original columns and their row order. Rerunning
-the input extension. Different input files with identical basenames therefore
-share the same output filename. The original input is not overwritten.
+Both scripts use the same validation and calculation, keep the original
+columns and record order, and append `height_m`. All 120 rows were independently
+compared with the trigonometric formula. The first row, *Populus tremula*, was
+31.665833774 m away at 41.282636194 degrees and gives 27.802116144 m. A test
+measurement of 8 m at 45 degrees also gave 8 m. Repeated runs reproduced the
+same CSV. Missing and extra arguments, invalid paths, malformed CSVs, non-finite
+measurements, out-of-range values and an output alias to the input were rejected.
+The Bash runner returned a failure when the R input was unavailable.
 
-## Test notes
+## Step through the tree-height calculation
 
-For the manual check I used data row 1 (line 2 of the CSV), `Populus tremula`:
+In a disposable working copy under `sandbox/`, keep `code/TreeHeight.R`,
+`code/get_TreeHeight.R` and `data/trees.csv` at the same relative paths. In that
+copy, insert `browser()` inside `main()` immediately before the assignment to
+`trees$height_m`. From the copy's root, start R in the terminal:
 
-| Distance (m) | Angle (degrees) | Expected height (m) | Calculated height (m) |
-Python was used only for temporary verification; it is not needed to run this
-coursework.
+```bash
+R --vanilla --args data/trees.csv
+```
+
+At the R prompt and then the browser prompt, enter the following in order.
+Enter `n` until the debugger has advanced past the assignment before checking
+`trees$height_m[1]`.
+
+```r
+source("code/get_TreeHeight.R")
+trees$Distance.m[1]
+trees$Angle.degrees[1]
+trees$Distance.m[1] * tan(trees$Angle.degrees[1] * pi / 180)
+n
+n
+trees$height_m[1]
+c
+```
+
+The predicted and stepped values matched in a live R session. The formal
+script runs without a breakpoint.
 
 # Assignment 3: Pound Hill cultivation timing and plant species richness
 
@@ -317,7 +433,9 @@ The data contain 41 species, 59 distinct quadrats and 12 plots, with four plots
 per treatment. The script ran twice successfully; both CSVs had the correct
 columns and one row per plot, and were identical after rerunning. Independent
 calculations from the original CSV matched every plot mean. Both input files
-retained their original SHA-256 hashes. Python was used only for verification.
+retained their original SHA-256 hashes. The PDF had one page, the expected
+labels and pixel-identical renderings on rerun. Python was used to verify the
+CSV results and the plot renderings.
 
 Treatment means, giving each plot equal weight, were:
 
@@ -332,3 +450,304 @@ treatments. October had the highest abundance: many individuals of a few
 dominant species can give high abundance without high richness. The figure
 alone cannot establish causation; random treatment allocation within blocks
 and comparable management and sampling would need confirmation.
+
+# MQB Shell, Python and R exercises
+
+The examples in this section come from the Shell Scripting, Python, R and Data
+Wrangling chapters in `MQB-main.zip`. Run the commands from the repository root
+unless a different working directory is shown. Bash, Python 3 and R are used.
+TIFF conversion also needs ImageMagick, and `data_wrang.R` needs `reshape2`.
+On this Linux checkout, both extra dependencies are available for the current
+Bash session through `source sandbox/mqb-deps/env.sh`. On another checkout,
+make ImageMagick (`magick` or `convert`) and the R package `reshape2` available
+in the usual environment.
+
+## Shell label and image exercises
+
+The three introductory Bash scripts are documented under Assignment 1. For
+the two additional text exercises, prepare disposable inputs and run:
+
+```bash
+mkdir -p sandbox
+printf 'first\n' > sandbox/count-demo-first.txt
+printf 'second' > sandbox/count-demo-second.txt
+bash code/CountLines.sh sandbox/count-demo-first.txt
+bash code/CountLines.sh sandbox/count-demo-second.txt
+bash code/ConcatenateTwoFiles.sh sandbox/count-demo-first.txt sandbox/count-demo-second.txt results/combined.txt
+```
+
+`CountLines.sh` reports one newline for the first example and zero for the
+second because the latter has no terminating newline. Concatenation writes
+the first input before the second, preserves bytes, and replaces the output
+on rerun. It requires a path under `results/` and rejects a destination that
+refers to either input. Bad counts of arguments, missing inputs and failed
+reads yielded nonzero status with diagnostics.
+
+For the label exercise, run `bash code/CheckLabel.sh oak`. Both `oak` and `pine`
+succeeded. Missing or extra arguments exit with status 2, and an unknown label
+such as `birch` exits with status 1. Errors are written to standard error.
+
+`tiff2_png.sh` uses lowercase `.tif` files in the **current directory**, with
+no directory argument. For a reproducible test with disposable TIFF copies:
+
+```bash
+# Activate the existing checkout environment above if needed.
+project_root=$PWD
+mkdir -p sandbox
+image_test=$(mktemp -d "$PWD/sandbox/tiff-check.XXXXXX")
+mkdir "$image_test/originals" "$image_test/copies"
+if command -v magick >/dev/null 2>&1; then
+    tiff_tool=magick
+else
+    tiff_tool=convert
+fi
+"$tiff_tool" -size 12x8 gradient: "$image_test/originals/field notes.tif"
+"$tiff_tool" -size 6x9 xc:blue "$image_test/originals/-sample.tif"
+cp -- "$image_test/originals/"*.tif "$image_test/copies/"
+cd "$image_test/copies"
+bash "$project_root/code/tiff2_png.sh"
+bash "$project_root/code/tiff2_png.sh"  # Regenerate the same PNGs.
+cd "$project_root"
+```
+
+Running the script again replaces the existing PNGs. Both runs produced PNGs
+that matched the source TIFF pixels, including after replacing one PNG with a
+different test image before the second run. The TIFF copies stayed unchanged.
+No matched files or a failed conversion returns status 1. A missing converter
+returns status 127. The `./` prefix keeps a leading `-` in a filename
+from being treated as a converter option.
+
+## Python examples and tests
+
+| Command | Behavior checked |
+| --- | --- |
+| `python3 code/cfexercises1.py` | The condition functions accept fixed arguments and return results. Factorial implementations agree for `0` through `10`, including `0! = 1`. |
+| `python3 code/loops.py` | Prints `0` to `4`, the items of a mixed list, running totals ending in `1234`, then `1` to `100`. |
+| `python3 code/cfexercises2.py` | The six calls print 4, 4, 14, 5, 8 and 6 greetings. In `hello_2`, each value prints at most once because of `elif`. `hello_6` stops at the `break` after printing `hello! 5`. |
+| `python3 code/MyExampleScript.py` | Squares `2` and reports `4`. |
+| `python3 code/boilerplate.py` | Prints the boilerplate message during direct execution. Importing it does not run `main()`. |
+| `python3 code/using_name.py` | Reports `__main__` when run as a script. After import, `module_name()` returns `using_name`. |
+| `python3 code/sysargv.py oak "two words"` | Reports two arguments. A run with no arguments reports zero. |
+| `python3 code/control_flow.py` | Runs the parity, divisor and prime examples. |
+| `python3 code/test_control_flow.py` | Imports functions from `control_flow.py` and checks their results. Success produces no output. |
+| `python3 code/observations_practice.py` | Reports sites A `(2, 1)` and B `(0, 0)`, with known total first and missing count second. |
+| `python3 code/test_observations_practice.py` | Seven groups cover the three CSVs, exact duplicates, empty and absent sites, invalid rows at other sites and preservation of inputs. The new Fen example gave `(12, 1)`. |
+| `python3 code/debugme.py` | Catches the expected division by zero and reports the last valid quotient, `20.0`. |
+
+The course tests cover normal parity, zero, a negative integer and rejection
+of strings. They check the largest available divisor and the `None` case,
+the smallest prime and nearby values, and bounds of the prime list. The
+`count_above` test with `[9, 10, 11]` and threshold `10` confirms that equality
+does not count. Other tests cover a regular list and an empty list.
+`python3 -m doctest -v code/control_flow.py` passed all three examples.
+With `PYTHONPATH=code python3 -c 'import using_name; print(using_name.module_name())'`,
+the result was `using_name`. Importing the condition functions, observations
+module and debugger exercise produced no report and read no input data.
+
+### Observation rules and Python debugger
+
+Validate every row before filtering by site. Deduplicate the complete record,
+so a repeated count on another date still contributes. The supplied boundary
+file gives C `(None, 2)` and D `(0, 0)`. C has no observed counts, while D has
+an observed zero. Both invalid CSV rows were checked independently.
+
+From Bash, start Pdb with a conditional breakpoint at the division:
+
+```bash
+python3 -m pdb -c 'break 13, y == 0' -c continue code/debugme.py
+```
+
+At `(Pdb)`, enter `p (i, x, y, last_quotient)` and `list`. The real session
+paused with `(19, 20, 0, 20.0)`. Enter `continue` to execute the guarded division
+and finish the report, then `quit` if Pdb restarts the program.
+
+## R functions, control flow and debugging
+
+| Command | Behavior checked |
+| --- | --- |
+| `Rscript code/boilerplate.R` | Identifies numeric and character arguments. |
+| `Rscript code/control_flow.R` | Shows the logical branch, the squares from 1 to 100, and loops over character values. The message for the random draw appears only at or below 0.5. |
+| `Rscript code/r_conditionals.R` | Shows parity, powers of two and primality for scalar whole numbers from −2,147,483,647 through 2,147,483,647. Checks include `2` prime, `49` composite and invalid inputs. |
+| `Rscript code/break.R` | Prints 0 through 9 and stops at 10. |
+| `Rscript code/next.R` | Skips even numbers and prints 1, 3, 5, 7 and 9. |
+| `Rscript code/try.R` | The seeded run recorded all 15 trials, with 13 means and 2 caught errors. The list `result` retains the failures as `try-error` objects. The script sets a seed for a reproducible demonstration; the number of successes can change with another seed. |
+
+For `browse.R`, start `R --vanilla` at the repository root. In a terminal
+without a graphical display, open a temporary plot device before sourcing:
+
+```r
+pdf(tempfile(fileext = ".pdf"))
+source("code/browse.R")
+```
+
+At `Browse[1]>`, try `ls()`, `t` and `N[t]`. The first pause showed `t = 2`
+and `N[t] = 2.71828` (rounded). `n` steps to the next expression, `c` continues
+until the next breakpoint or the end of the run, and `Q` aborts debugging and
+returns to the R prompt. The breakpoint is inside the loop, so continuing a
+full run requires `c` at each pause. After continuing through all iterations,
+`dev.off()` closes the temporary PDF device. Inspection, stepping, aborting and
+continuing to the plot were verified in an interactive R session.
+
+## R file I/O and Pound Hill data
+
+- `Rscript code/basic_io.R` reads `data/trees.csv` and creates `results/` if
+  needed. It writes `results/MyData.csv`, appends a copy of the first record,
+  then overwrites the file to demonstrate row names and omitting the header.
+  The file had 121, 122, 121 and 120 physical lines after the four writes. The
+  final CSV has the 120 original data rows plus a row-number field and no header.
+- `Rscript code/data_wrang.R` reads the two Pound Hill CSVs. The metadata uses
+  a semicolon delimiter. The script transposes the raw table, treats blank
+  counts in sampled quadrats as observed zeroes and uses `reshape2::melt()` to
+  reshape the species columns. `results/pound_hill_long.csv` contains 2,419
+  rows for 59 recorded quadrats and 41 species. Every row was checked against
+  the original counts. The source CSVs retained their original hashes.
+
+- `Rscript code/data_wrang_tidy.R` repeats the Pound Hill reshaping with
+  `dplyr` and `tidyr::pivot_longer()` and writes
+  `results/pound_hill_long_tidy.csv`. Both versions produced identical
+  identifiers, ordering, records and types. The four identifier columns and
+  `Species` are factors in R, and `Count` is integer. The two output CSVs were
+  byte-identical and remain separate files.
+- `Rscript code/observations_practice.R` checks the ordinary and boundary data
+  with `stopifnot()` and creates `results/observations_known_totals.pdf`. It
+  agrees with Python on A `(2, 1)`, B `(0, 0)` and D `(0, 0)`. For C, R reports
+  `(NA, 2)` and Python reports `(None, 2)`. The plot labels
+  the observed zeros and annotates C as a site with no known counts.
+
+In a shell, reproduce the expected invalid input failure with:
+
+```bash
+Rscript -e 'source("code/observations_practice.R"); read_observations("data/bootcamp_observations_invalid.csv")'
+```
+
+It exits nonzero and identifies CSV row 2 and count `-1`. The Python exercise
+uses Python's `int()` conversion. The R exercise checks the specified digit
+pattern and R's integer range before conversion. Both validate before
+deduplicating and preserve missing versus observed zero.
+
+Generated outputs and temporary image tests are covered by `.gitignore`.
+
+## Portfolio verification
+
+The nine practicals and 30 classroom files were checked on Linux from their
+documented entry points. The checks included fresh output directories, repeat
+runs, failures and three live debugger sessions. Input files supplied by MQB
+were compared with the referenced snapshot. The existing `tab-example.tsv`
+was preserved. The three previously tracked Silwood result CSVs were removed
+from the Git index and kept locally. After submission, clone the GitHub
+repository into `verification/` and rerun the commands in this guide from that
+clone's root.
+
+## AI use for the portfolio
+
+From November 20 to 27, 2026, I used OpenAI Codex to help me understand the
+Shell, Python and R examples in the MQB textbook, troubleshoot runtime errors,
+review and improve code, and organize this README. 
+
+I checked the suggestions by reviewing the results of the Linux runs and
+comparing them with the course requirements and original data. For example, I
+used two TIFF copies to check conversion and reruns, and verified that the PNG
+pixels matched those of the original TIFFs. I also compared the output of the
+two Pound Hill data wrangling workflows in R and confirmed that their CSV
+files were identical byte for byte.
+
+
+## Revisions after formative feedback
+
+### Assignment 1
+
+The five FASTA commands already use `../data/fasta/` when run from `code/`.
+Repeating them gave 27, 127 and 78,104 newlines (78,258 total), 78,103
+header-free sequence lines, 4,686,137 sequence positions, 21,968 `ATGC`
+matches and an AT/GC ratio of `.96922822848944879586`. An independent count
+confirmed the results, including the treatment of ambiguity and wrapped
+motifs. The two converters already follow the repository-root convention.
+In an isolated local copy with no `results/`, they created the output for
+the supplied TSV and all four temperature CSVs. All five outputs matched
+the expected byte substitutions and were identical on rerun. Checks also
+covered filenames with spaces, consecutive separators, missing or extra
+arguments, and missing or unreadable inputs. The source hashes stayed the
+same.
+
+### Assignment 2
+
+The Silwood cleaner now reports the physical starting line of a rejected
+CSV record. The regression example includes a blank line and a quoted field
+that spans lines. The integrated test passes a valid and invalid record
+through `process_records()` and checks that only accepted records contribute
+to `summarise_oaks()`.
+
+```bash
+python3 code/test_silwood_trees.py
+python3 code/clean_silwood_trees.py
+```
+
+All 12 test groups passed. From an isolated local copy with no `results/`, the
+cleaner produced all three CSVs twice with identical bytes. The supplied
+survey gave 24 accepted records and 12 rejected records, with four each of
+`petraea` and `robur`. Headers and record order matched the specification.
+For example, source line 27 reported duplicate `ST004`; the reasons for
+`ST036` appeared in metadata order. The raw CSV and metadata were unchanged.
+Git's index contains no generated results. The GitHub fresh-clone check
+remains to be done after pushing the candidate version.
+
+### Assignment 3: Tree heights
+
+`TreeHeight(degrees, distance)` now follows the taught argument order. The
+fixed and general scripts both pass the angle first and share the same
+calculation. `TreeHeight(37, 40)` gives `30.142162004112` m, matching the
+independent calculation `40 * tan(37 * pi / 180)`.
+
+Run these commands in a shell from the repository root:
+
+```bash
+Rscript code/TreeHeight.R
+Rscript code/get_TreeHeight.R data/trees.csv
+bash code/run_get_TreeHeight.sh
+```
+
+In an **R console** started from the same directory, run:
+
+```r
+source("code/TreeHeight.R")
+TreeHeight(37, 40)
+```
+
+The fixed script reads `data/trees.csv` and writes `results/TreeHts.csv`.
+The general script takes an input path, and its `data/trees.csv` example and
+shell wrapper both write `results/trees_treeheights.csv`.
+
+| Source record | Horizontal distance (m) | Angle (degrees) | Independent height (m) | Program height (m) |
+| --- | ---: | ---: | ---: | ---: |
+| CSV line 2, *Populus tremula* | 31.6658337740228 | 41.2826361937914 | 27.802116143854 | 27.802116143854 |
+
+The reported heights agree to 12 decimal places for this row. An interactive
+R session with `data/trees.csv` passed as an argument also confirmed the row
+by stepping through the assignment to `height_m`. All 120 records matched an
+independent calculation and retained input order. The three commands
+reproduced identical CSV contents on rerun. In an isolated copy, a distance
+of 101 m caused all three entry points to exit with status 1 and a distance
+bound error, both with and without existing result files. No result was
+created on failure or replaced if it already existed.
+
+### Assignment 3: Pound Hill
+
+`code/pound_hill_analysis.R` preserves the raw cultivation keys `march`, `may`
+and `october` in both CSVs. The figure uses `March`, `May` and `October` for
+display. Fixed horizontal offsets separate the 12 individual plot means,
+and a different symbol marks each treatment mean. Each treatment mean gives
+its four plots equal weight.
+
+```bash
+Rscript code/pound_hill_analysis.R
+```
+
+This reads `data/pound_hill_data.csv` and `data/pound_hill_meta_data.csv` and
+regenerates `results/pound_hill_plot_richness.csv`,
+`results/pound_hill_plot_abundance.csv` and
+`results/pound_hill_plot_richness.pdf`. An independent calculation from the
+raw data matched each plot key and all 12 richness and abundance values in
+their respective CSVs. The 12 plotted values and three treatment means were
+checked against the table. Mean richness per quadrat was 7.8083 for March,
+9.6500 for May and 7.6125 for October. The CSV bytes and rendered PDF matched
+on rerun.

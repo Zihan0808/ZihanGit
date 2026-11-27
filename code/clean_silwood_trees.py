@@ -23,15 +23,32 @@ ISSUE_FIELDS = ["source_row", "record_id", "reasons"]
 OAK_COUNT_FIELDS = ["species", "count"]
 
 
-def load_records(path=INPUT_PATH):
-    """Read the survey and check its column names."""
+def _read_numbered_records(path):
+    """Yield each survey record with its starting line in the input file."""
     with path.open(newline="", encoding="utf-8") as source:
-        reader = csv.DictReader(source)
-        if reader.fieldnames != INPUT_FIELDS:
-            raise ValueError(
-                f"Expected columns {INPUT_FIELDS}, found {reader.fieldnames}"
-            )
-        return list(reader)
+        reader = csv.reader(source)
+        header = next(reader, None)
+        if header != INPUT_FIELDS:
+            raise ValueError(f"Expected columns {INPUT_FIELDS}, found {header}")
+
+        # Record the physical position before reading a potentially multiline row.
+        while True:
+            source_row = reader.line_num + 1
+            values = next(reader, None)
+            if values is None:
+                break
+            if not values:
+                continue
+            row = dict.fromkeys(header)
+            row.update(zip(header, values))
+            if len(values) > len(header):
+                row[None] = values[len(header):]
+            yield source_row, row
+
+
+def load_records(path=INPUT_PATH):
+    """Read the survey and return row dictionaries without line metadata."""
+    return [row for _, row in _read_numbered_records(path)]
 
 
 def validate_record(row, source_row, accepted_ids):
@@ -121,11 +138,15 @@ def record_id_key(row):
 
 
 def process_records(rows):
-    """Sort records into accepted rows and issue reports."""
+    """Sort dictionary rows into accepted rows and issue reports."""
+    return _process_numbered_records(enumerate(rows, start=2))
+
+
+def _process_numbered_records(numbered_rows):
     accepted = []
     issues = []
     accepted_ids = []
-    for source_row, row in enumerate(rows, start=2):
+    for source_row, row in numbered_rows:
         cleaned, reasons = validate_record(row, source_row, accepted_ids)
         if cleaned is None:
             record_id = row.get("record_id")
@@ -169,7 +190,7 @@ def write_csv(path, fieldnames, rows):
 
 def main():
     """Clean the survey and write the three result files."""
-    clean_records, issues = process_records(load_records())
+    clean_records, issues = _process_numbered_records(_read_numbered_records(INPUT_PATH))
     oak_counts = summarise_oaks(clean_records)
 
     write_csv(

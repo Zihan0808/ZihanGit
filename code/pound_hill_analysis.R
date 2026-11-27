@@ -13,9 +13,9 @@ wide_data <- as.data.frame(t(as.matrix(raw_data[, -1])),
 names(wide_data) <- raw_data[, 1]
 identifiers <- c("Cultivation", "Block", "Plot", "Quadrat")
 species_names <- names(wide_data)[-(1:4)]
-wide_data$Cultivation <- factor(wide_data$Cultivation,
-                               levels = c("march", "may", "october"),
-                               labels = c("March", "May", "October"))
+# Keep the input codes for grouping and CSV output. Label the figure separately.
+cultivation_keys <- c("march", "may", "october")
+wide_data$Cultivation <- factor(wide_data$Cultivation, levels = cultivation_keys)
 wide_data$Plot <- as.integer(wide_data$Plot)
 stopifnot(!anyNA(wide_data[identifiers]),
           !anyDuplicated(wide_data[identifiers]))
@@ -61,21 +61,43 @@ stopifnot(nrow(plot_richness) == 12, nrow(plot_abundance) == 12)
 print(plot_richness, row.names = FALSE)
 print(plot_abundance, row.names = FALSE)
 cat("Treatment means, giving each plot equal weight:\n")
-print(aggregate(MeanRichness ~ Cultivation, data = plot_richness, FUN = mean))
+treatment_richness <- aggregate(MeanRichness ~ Cultivation, data = plot_richness,
+                                FUN = mean)
+print(treatment_richness, row.names = FALSE)
 print(aggregate(MeanAbundance ~ Cultivation, data = plot_abundance, FUN = mean))
 
 dir.create("results", showWarnings = FALSE)
 write.csv(plot_richness, "results/pound_hill_plot_richness.csv", row.names = FALSE)
 write.csv(plot_abundance, "results/pound_hill_plot_abundance.csv", row.names = FALSE)
 
-# Each point represents a plot, rather than an individual quadrat.
+# Offset plot points in fixed order so nearby values stay visible on reruns.
+# Place the equally weighted treatment mean beside the individual plots.
+axis_positions <- seq_along(cultivation_keys)
+axis_labels <- c("March", "May", "October")
+plot_positions <- match(plot_richness$Cultivation, cultivation_keys)
+for (position in axis_positions) {
+    rows <- which(plot_richness$Cultivation == cultivation_keys[position])
+    plot_positions[rows] <- position + seq(-0.26, 0.04, length.out = length(rows))
+}
+mean_positions <- match(treatment_richness$Cultivation, cultivation_keys) + 0.23
+richness_range <- range(plot_richness$MeanRichness)
+plot_colour <- "#246B75"
+mean_colour <- "#AA5622"
+
 pdf("results/pound_hill_plot_richness.pdf", width = 7, height = 5)
-par(mar = c(5, 5, 3, 1))
-stripchart(MeanRichness ~ Cultivation, data = plot_richness,
-           vertical = TRUE, method = "stack", pch = 19, col = "darkgreen",
-           xlab = "Cultivation treatment",
-           ylab = "Mean species richness per quadrat",
-           main = "Pound Hill: species richness by cultivation timing")
+par(mar = c(4.5, 4.6, 3, 1.2))
+plot(NA_real_, NA_real_, type = "n", xlim = c(0.5, tail(axis_positions, 1) + 0.5),
+     ylim = richness_range + c(-0.3, 1.3), xaxt = "n", bty = "l",
+     xlab = "Cultivation treatment", ylab = "Mean species richness per quadrat",
+     main = "Pound Hill: species richness by cultivation timing")
+axis(1, at = axis_positions, labels = axis_labels)
+abline(h = axTicks(2), col = "#E4EAEC", lwd = 0.8)
+points(plot_positions, plot_richness$MeanRichness, pch = 19, col = plot_colour)
+points(mean_positions, treatment_richness$MeanRichness, pch = 23,
+       col = mean_colour, bg = "#EAA461", cex = 1.25)
+legend("topleft", inset = c(0.01, 0.01), horiz = TRUE, bty = "n",
+       legend = c("Individual plot mean", "Treatment mean"), pch = c(19, 23),
+       col = c(plot_colour, mean_colour), pt.bg = c(NA, "#EAA461"), cex = 0.87)
 dev.off()
 
 # May has the highest mean plot richness (9.65 species per quadrat), compared

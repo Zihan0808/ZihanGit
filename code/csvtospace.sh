@@ -1,9 +1,9 @@
 #!/bin/bash
-# Author: ZihanGao (repository Git author)
+# Author: Zihan Gao
 # Script: csvtospace.sh
 # Description: Replace commas with spaces; write results/INPUT_BASENAME.txt.
 # Usage: bash code/csvtospace.sh INPUT_FILE (from repository root)
-# Updated: 2026-10-15
+# Updated: 2026-11-25
 
 if [[ $# -ne 1 ]]; then
     printf 'Usage: bash %s INPUT_FILE\n' "$0" >&2
@@ -29,7 +29,16 @@ if [[ "$input_file" -ef "$output_file" ]]; then
     exit 1
 fi
 
-if ! tr ',' ' ' < "$input_file" > "$output_file"; then
+if [[ -L "$output_file" || ( -e "$output_file" && ! -f "$output_file" ) ]]; then
+    printf 'Error: output is not a regular file: %s\n' "$output_file" >&2
+    exit 1
+fi
+
+# Publish the result only after a successful conversion.
+temp_output=$(mktemp -- "results/.$input_name.XXXXXX") || exit 1
+trap 'rm -f -- "$temp_output"' EXIT
+if ! tr ',' ' ' < "$input_file" > "$temp_output" ||
+        ! mv -fT -- "$temp_output" "$output_file"; then
     printf 'Error: conversion failed: %s\n' "$output_file" >&2
     exit 1
 fi

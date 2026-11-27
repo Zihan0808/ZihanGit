@@ -1,9 +1,9 @@
 #!/bin/bash
-# Author: ZihanGao (repository Git author)
+# Author: Zihan Gao
 # Script: tabtocsv.sh
 # Description: Replace tabs with commas; write results/INPUT_BASENAME.csv.
 # Usage: bash code/tabtocsv.sh INPUT_FILE (from repository root)
-# Updated: 2026-10-15
+# Updated: 2026-11-25
 
 if [[ $# -ne 1 ]]; then
     printf 'Usage: bash %s INPUT_FILE\n' "$0" >&2
@@ -24,14 +24,21 @@ if ! mkdir -p results; then
     exit 1
 fi
 
-
 if [[ "$input_file" -ef "$output_file" ]]; then
     printf 'Error: output refers to the input file: %s\n' "$output_file" >&2
     exit 1
 fi
 
+if [[ -L "$output_file" || ( -e "$output_file" && ! -f "$output_file" ) ]]; then
+    printf 'Error: output is not a regular file: %s\n' "$output_file" >&2
+    exit 1
+fi
 
-if ! tr '\t' ',' < "$input_file" > "$output_file"; then
+# Publish the result only after a successful conversion.
+temp_output=$(mktemp -- "results/.$input_name.XXXXXX") || exit 1
+trap 'rm -f -- "$temp_output"' EXIT
+if ! tr '\t' ',' < "$input_file" > "$temp_output" ||
+        ! mv -fT -- "$temp_output" "$output_file"; then
     printf 'Error: conversion failed: %s\n' "$output_file" >&2
     exit 1
 fi
