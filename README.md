@@ -659,12 +659,6 @@ from the Git index and kept locally. Clone the GitHub repository into a new
 directory outside this repository and rerun the commands in this guide from
 that clone's root.
 
-### Fresh-clone check
-
-- Date: TODO
-- Commit checked: TODO
-- Clone location: a new directory outside this repository
-- Result: TODO
 
 ## AI use for the portfolio
 
